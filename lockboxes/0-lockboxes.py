@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+"""
+Module containing the canUnlockAll function.
+
+This module solves the lockboxes problem where we need to determine
+if all boxes can be opened starting from box 0.
+"""
+
+
+def canUnlockAll(boxes):
+    """
+    Determine if all boxes can be opened.
+
+    Args:
+        boxes (list): List of lists where each sublist contains keys
+                     to other boxes. Box 0 is unlocked by default.
+
+    Returns:
+        bool: True if all boxes can be opened, False otherwise.
+    """
+    if not boxes or not isinstance(boxes, list):
+        return False
+
+    n = len(boxes)
+    if n == 0:
+        return True
+
+    # Keep track of opened boxes
+    opened = set([0])  # Box 0 is unlocked by default
+
+    # Stack to store boxes to explore
+    to_explore = [0]
+
+    while to_explore:
+        current_box = to_explore.pop()
+
+        # Get all keys from current box
+        for key in boxes[current_box]:
+            # Check if key is valid and box is not already opened
+            if isinstance(key, int) and 0 <= key < n and key not in opened:
+                opened.add(key)
+                to_explore.append(key)
+
+    # Return True if all boxes are opened
+    return len(opened) == n
