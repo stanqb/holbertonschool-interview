@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 """Log parsing script that reads stdin and computes metrics."""
 import sys
-import re
 
 
 def print_stats(total_size, status_counts):
@@ -12,33 +11,50 @@ def print_stats(total_size, status_counts):
             print("{}: {}".format(code, status_counts[code]))
 
 
+def parse_line(line):
+    """Parse a log line and return (status_code, file_size) or None."""
+    try:
+        parts = line.split()
+        if len(parts) < 9:
+            return None
+        # Check basic structure: parts[1] == '-', parts[-3] ends with '"'
+        if parts[1] != '-':
+            return None
+        if not parts[2].startswith('['):
+            return None
+        if parts[5] != '"GET':
+            return None
+        if parts[6] != '/projects/260':
+            return None
+        if parts[7] != 'HTTP/1.1"':
+            return None
+        status_code = int(parts[8])
+        file_size = int(parts[9])
+        return (status_code, file_size)
+    except (ValueError, IndexError):
+        return None
+
+
 def main():
     """Main function to parse logs from stdin."""
     total_size = 0
     line_count = 0
     valid_codes = {200, 301, 400, 401, 403, 404, 405, 500}
     status_counts = {code: 0 for code in valid_codes}
-    pattern = re.compile(
-        r'^\d+\.\d+\.\d+\.\d+ - \[.+\] "GET /projects/260 HTTP/1\.1" \d+ \d+$'
-    )
 
     try:
         for line in sys.stdin:
             line = line.strip()
-            if not pattern.match(line):
+            result = parse_line(line)
+            if result is None:
                 continue
-            parts = line.split()
-            try:
-                file_size = int(parts[-1])
-                status_code = int(parts[-2])
-                total_size += file_size
-                if status_code in valid_codes:
-                    status_counts[status_code] += 1
-                line_count += 1
-                if line_count % 10 == 0:
-                    print_stats(total_size, status_counts)
-            except (ValueError, IndexError):
-                continue
+            status_code, file_size = result
+            total_size += file_size
+            if status_code in valid_codes:
+                status_counts[status_code] += 1
+            line_count += 1
+            if line_count % 10 == 0:
+                print_stats(total_size, status_counts)
     except KeyboardInterrupt:
         print_stats(total_size, status_counts)
         raise
