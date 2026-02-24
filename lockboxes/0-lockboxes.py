@@ -25,21 +25,17 @@ def canUnlockAll(boxes):
     if n == 0:
         return True
 
-    # Keep track of opened boxes
-    opened = set([0])  # Box 0 is unlocked by default
+    opened = set([0])
 
-    # Stack to store boxes to explore
     to_explore = [0]
 
     while to_explore:
         current_box = to_explore.pop()
 
-        # Get all keys from current box
         for key in boxes[current_box]:
-            # Check if key is valid and box is not already opened
+
             if isinstance(key, int) and 0 <= key < n and key not in opened:
                 opened.add(key)
                 to_explore.append(key)
 
-    # Return True if all boxes are opened
     return len(opened) == n
