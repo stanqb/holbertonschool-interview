@@ -1,51 +1,40 @@
 #!/usr/bin/python3
 """Log parsing script that reads stdin and computes metrics."""
 import sys
-import re
 
 
-def print_stats(total_size, status_counts):
+def print_stats(file_size, status_dict):
     """Print current statistics."""
-    print("File size: {}".format(total_size))
-    for code in sorted(status_counts.keys()):
-        if status_counts[code] > 0:
-            print("{}: {}".format(code, status_counts[code]))
-
-
-def main():
-    """Main function to parse logs from stdin."""
-    total_size = 0
-    line_count = 0
-    valid_codes = {200, 301, 400, 401, 403, 404, 405, 500}
-    status_counts = {code: 0 for code in valid_codes}
-    pattern = re.compile(
-        r'^\S+ - \[.*\] "GET /projects/260 HTTP/1\.1" (\d+) (\d+)$'
-    )
-
-    try:
-        for line in sys.stdin:
-            line = line.strip()
-            match = pattern.match(line)
-            if not match:
-                continue
-            try:
-                status_code = int(match.group(1))
-                file_size = int(match.group(2))
-                total_size += file_size
-                if status_code in valid_codes:
-                    status_counts[status_code] += 1
-                line_count += 1
-                if line_count % 10 == 0:
-                    print_stats(total_size, status_counts)
-            except ValueError:
-                continue
-    except KeyboardInterrupt:
-        print_stats(total_size, status_counts)
-        raise
-    finally:
-        if line_count == 0 or line_count % 10 != 0:
-            print_stats(total_size, status_counts)
+    print("File size: {:d}".format(file_size))
+    for key in sorted(status_dict.keys()):
+        if status_dict[key] != 0:
+            print("{}: {:d}".format(key, status_dict[key]))
 
 
 if __name__ == "__main__":
-    main()
+    i = 0
+    status_dict = {
+        '200': 0,
+        '301': 0,
+        '400': 0,
+        '401': 0,
+        '403': 0,
+        '404': 0,
+        '405': 0,
+        '500': 0
+    }
+    file_size = 0
+    try:
+        for line in sys.stdin:
+            keywords = line.split()
+            if len(keywords) >= 2:
+                if keywords[-2] in status_dict.keys():
+                    status_dict[keywords[-2]] += 1
+                file_size += int(keywords[-1])
+                i += 1
+                if not i % 10:
+                    print_stats(file_size, status_dict)
+        print_stats(file_size, status_dict)
+    except KeyboardInterrupt:
+        print_stats(file_size, status_dict)
+        raise
