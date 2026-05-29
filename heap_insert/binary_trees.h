@@ -23,4 +23,7 @@ typedef struct binary_tree_s heap_t;
 /* Task 0 */
 binary_tree_t *binary_tree_node(binary_tree_t *parent, int value);
 
+/* Task 1 */
+heap_t *heap_insert(heap_t **root, int value);
+
 #endif /* BINARY_TREES_H */
